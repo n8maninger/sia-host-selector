@@ -25,7 +25,7 @@ var (
 	// enough hosts are available
 	minHosts = 100
 
-	// $15 USD/TB
+	// $20 USD/TB
 	maxDownloadPrice = decimal.NewFromFloat(20)
 	// $0.25 USD/TB
 	maxUploadPrice = decimal.NewFromFloat(0.25)
