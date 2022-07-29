@@ -27,39 +27,37 @@ var (
 
 	// $20 USD/TB
 	maxDownloadPrice = decimal.NewFromFloat(20)
-	// $0.25 USD/TB
-	maxUploadPrice = decimal.NewFromFloat(0.25)
+	// $1.00 USD/TB
+	maxUploadPrice = decimal.NewFromFloat(1)
 	// $2.00 USD/TB/mo
 	maxStorePrice = decimal.NewFromFloat(2)
 	// at least a month old
 	minAge = time.Now().AddDate(0, -1, 0)
 	// 85% as measured by Sia Central
-	minUptime float32 = 85
-	// 5000bps as measured by Sia Central
+	minUptime float32 = 80
+	// 5Mbps as measured by Sia Central
 	//
 	// note: I leave this relatively low since not every host has good peering
 	// to the central benchmark server
 	minDownloadSpeed uint64 = 5e6
-	// 5000bps as measured by Sia Central
+	// 1Mbps as measured by Sia Central
 	//
 	// note: I leave this relatively low since not every host has good peering
 	// to the central benchmark server
-	minUploadSpeed uint64 = 5e6
+	minUploadSpeed uint64 = 1e6
 )
 
-func formatBpsString(bps uint64) string {
+func formatBpsString(speed decimal.Decimal) string {
 	const units = "KMGTPE"
+	var factor = decimal.New(1000, 0)
 
 	// short-circuit for < 1000 bits/s
-	if bps < 1000 {
-		return fmt.Sprintf("%d bps", bps)
+	if speed.Cmp(factor) < 0 {
+		return fmt.Sprintf("%v bps", speed.StringFixed(2))
 	}
 
-	speed := decimal.New(int64(bps), 0)
-
-	var i = 0
-	var factor = decimal.New(1000, 0)
-	for ; speed.Cmp(factor) == 1; i++ {
+	var i = -1
+	for ; speed.Cmp(factor) > 0; i++ {
 		speed = speed.Div(factor)
 	}
 	return fmt.Sprintf("%v %cbps", speed.StringFixed(2), units[i])
@@ -109,8 +107,7 @@ func updateHostWhitelist() error {
 	}
 
 	var contractPrice, storagePrice, downloadPrice, uploadPrice struct{ min, max, avg types.Currency }
-	var uptime struct{ min, max, avg decimal.Decimal }
-	var downloadSpeed, uploadSpeed struct{ min, max, avg uint64 }
+	var uptime, downloadSpeed, uploadSpeed struct{ min, max, avg decimal.Decimal }
 	var ages struct{ min, max, avg time.Duration }
 	keys := []types.SiaPublicKey{}
 
@@ -130,10 +127,12 @@ func updateHostWhitelist() error {
 		uploadPrice.avg = uploadPrice.avg.Add(host.Settings.UploadBandwidthPrice)
 		uptime.avg = uptime.avg.Add(decimal.NewFromFloat32(host.EstimatedUptime))
 
-		downBps := host.Benchmark.DataSize * 8 / host.Benchmark.DownloadTime
-		upBps := host.Benchmark.DataSize * 8 / host.Benchmark.UploadTime
-		downloadSpeed.avg += downBps
-		uploadSpeed.avg += upBps
+		upSeconds := decimal.New(int64(host.Benchmark.UploadTime), 0).Div(decimal.New(1000, 0))
+		downSeconds := decimal.New(int64(host.Benchmark.DownloadTime), 0).Div(decimal.New(1000, 0))
+		upBps := decimal.New(int64(host.Benchmark.DataSize)*8, 0).Div(upSeconds)
+		downBps := decimal.New(int64(host.Benchmark.DataSize)*8, 0).Div(downSeconds)
+		downloadSpeed.avg = downloadSpeed.avg.Add(downBps)
+		uploadSpeed.avg = uploadSpeed.avg.Add(upBps)
 
 		age := time.Since(host.FirstSeenTimestamp)
 		ages.avg += age
@@ -184,17 +183,17 @@ func updateHostWhitelist() error {
 			uptime.max = decimal.NewFromFloat32(host.EstimatedUptime)
 		}
 
-		if downloadSpeed.min > downBps {
+		if downloadSpeed.min.Cmp(downBps) > 0 {
 			downloadSpeed.min = downBps
 		}
-		if downloadSpeed.max < downBps {
+		if downloadSpeed.max.Cmp(downBps) < 0 {
 			downloadSpeed.max = downBps
 		}
 
-		if uploadSpeed.min > upBps {
+		if uploadSpeed.min.Cmp(upBps) > 0 {
 			uploadSpeed.min = upBps
 		}
-		if uploadSpeed.max < upBps {
+		if uploadSpeed.max.Cmp(upBps) < 0 {
 			uploadSpeed.max = upBps
 		}
 
@@ -216,9 +215,9 @@ func updateHostWhitelist() error {
 	storagePrice.avg = storagePrice.avg.Div64(uint64(len(hosts)))
 	downloadPrice.avg = downloadPrice.avg.Div64(uint64(len(hosts)))
 	uploadPrice.avg = uploadPrice.avg.Div64(uint64(len(hosts)))
-	uptime.avg = uptime.avg.Div(decimal.NewFromFloat(float64(len(hosts))))
-	downloadSpeed.avg = downloadSpeed.avg / uint64(len(hosts))
-	uploadSpeed.avg = uploadSpeed.avg / uint64(len(hosts))
+	uptime.avg = uptime.avg.Div(decimal.New(int64(len(hosts)), 0))
+	downloadSpeed.avg = downloadSpeed.avg.Div(decimal.New(int64(len(hosts)), 0))
+	uploadSpeed.avg = uploadSpeed.avg.Div(decimal.New(int64(len(hosts)), 0))
 	ages.avg = ages.avg / time.Duration(len(hosts))
 
 	log.Printf("Matching %d hosts", len(hosts))
