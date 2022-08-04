@@ -25,8 +25,8 @@ var (
 	// enough hosts are available
 	minHosts = 100
 
-	// $20 USD/TB
-	maxDownloadPrice = decimal.NewFromFloat(20)
+	// $10 USD/TB
+	maxDownloadPrice = decimal.NewFromFloat(10)
 	// $1.00 USD/TB
 	maxUploadPrice = decimal.NewFromFloat(1)
 	// $2.00 USD/TB/mo
@@ -112,7 +112,7 @@ func updateHostWhitelist() error {
 	keys := []types.SiaPublicKey{}
 
 	if minHosts > len(hosts) {
-		return fmt.Errorf("not enough hosts hosts need %d got %d", minHosts, len(hosts))
+		return fmt.Errorf("not enough hosts need %d got %d", minHosts, len(hosts))
 	}
 
 	for i, host := range hosts {
@@ -260,7 +260,7 @@ func main() {
 	for {
 		log.Println("Updating Whitelist")
 		if err := updateHostWhitelist(); err != nil {
-			log.Fatalln(err)
+			log.Println("[WARN]", err)
 		}
 		time.Sleep(time.Hour * 8)
 	}
