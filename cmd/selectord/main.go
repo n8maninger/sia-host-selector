@@ -24,7 +24,6 @@ var (
 	// minimum of 50 hosts + a few extra for churn, will throw an error if not
 	// enough hosts are available
 	minHosts = 100
-
 	// $10 USD/TB
 	maxDownloadPrice = decimal.NewFromFloat(10)
 	// $1.00 USD/TB
@@ -34,7 +33,7 @@ var (
 	// at least a month old
 	minAge = time.Now().AddDate(0, -1, 0)
 	// 85% as measured by Sia Central
-	minUptime float32 = 80
+	minUptime float64 = 80
 	// 5Mbps as measured by Sia Central
 	//
 	// note: I leave this relatively low since not every host has good peering
@@ -85,23 +84,18 @@ func updateHostWhitelist() error {
 	maxDownPriceSC := types.SiacoinPrecision.MulFloat(rdown).Div64(1e12)
 	maxStorePriceSC := types.SiacoinPrecision.MulFloat(rstore).Div64(1e12).Div64(4320)
 
-	acceptContracts := true
-	benchmarked := true
-	// 0.5 SC per contract
-	maxContractPrice := types.SiacoinPrecision.Div64(2)
+	filter := make(sia.HostFilter)
+	filter.WithAcceptingContracts(true)
+	filter.WithBenchmarked(true)
+	filter.WithMaxContractPrice(types.SiacoinPrecision.Div64(2))
+	filter.WithMaxUploadPrice(maxUpPriceSC)
+	filter.WithMaxDownloadPrice(maxDownPriceSC)
+	filter.WithMaxStoragePrice(maxStorePriceSC)
+	filter.WithMinUptime(minUptime)
+	filter.WithMinDownloadSpeed(minDownloadSpeed)
+	filter.WithMinUploadSpeed(minUploadSpeed)
 
-	hosts, err := siaCentralClient.GetActiveHosts(sia.HostFilter{
-		AcceptingContracts: &acceptContracts,
-		Benchmarked:        &benchmarked,
-		MaxUploadPrice:     &maxUpPriceSC,
-		MaxDownloadPrice:   &maxDownPriceSC,
-		MaxStoragePrice:    &maxStorePriceSC,
-		MaxContractPrice:   &maxContractPrice,
-		MinUptime:          &minUptime,
-		MinDownloadSpeed:   &minDownloadSpeed,
-		MinUploadSpeed:     &minUploadSpeed,
-	})
-
+	hosts, err := siaCentralClient.GetActiveHosts(filter, 0, 500)
 	if err != nil {
 		return fmt.Errorf("unable to get filtered hosts: %w", err)
 	}

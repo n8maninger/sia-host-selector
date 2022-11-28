@@ -107,6 +107,8 @@ github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFR
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/siacentral/apisdkgo v0.1.1 h1:Hz+WIqB97xXfHeQ3qqVxwD8LdlZFrZr3F54ErZ3lYU8=
 github.com/siacentral/apisdkgo v0.1.1/go.mod h1:/7DzuUcsH3TnTLQnSP5o8NQfXg9eutk4eEXKXp5zRIY=
+github.com/siacentral/apisdkgo v0.2.0 h1:0rhZoi/zGWK7m7dZBToqIyfY18pRyQv9QerTcJ4+xIg=
+github.com/siacentral/apisdkgo v0.2.0/go.mod h1:hlrt6prRR/XiJcRgQn5r73Yx22FyPhSjuq8mIusVnXs=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
