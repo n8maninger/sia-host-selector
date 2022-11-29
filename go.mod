@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/rodaine/table v1.0.1
 	github.com/shopspring/decimal v1.2.0
-	github.com/siacentral/apisdkgo v0.2.1
+	github.com/siacentral/apisdkgo v0.2.2
 	go.sia.tech/siad v1.5.9
 )
 

@@ -30,8 +30,8 @@ var (
 	maxUploadPrice = decimal.NewFromFloat(1)
 	// $2.00 USD/TB/mo
 	maxStorePrice = decimal.NewFromFloat(2)
-	// at least a month old
-	minAge = time.Now().AddDate(0, -1, 0)
+	// at least a month old (30 days * 144 blocks)
+	minAge uint64 = 30 * 144
 	// 85% as measured by Sia Central
 	minUptime float64 = 80
 	// 5Mbps as measured by Sia Central
@@ -87,6 +87,7 @@ func updateHostWhitelist() error {
 	filter := make(sia.HostFilter)
 	filter.WithAcceptingContracts(true)
 	filter.WithBenchmarked(true)
+	filter.WithMinAge(minAge)
 	filter.WithMaxContractPrice(types.SiacoinPrecision.Div64(2))
 	filter.WithMaxUploadPrice(maxUpPriceSC)
 	filter.WithMaxDownloadPrice(maxDownPriceSC)
@@ -94,6 +95,7 @@ func updateHostWhitelist() error {
 	filter.WithMinUptime(minUptime)
 	filter.WithMinDownloadSpeed(minDownloadSpeed)
 	filter.WithMinUploadSpeed(minUploadSpeed)
+	filter.WithSort(sia.HostSortDownloadSpeed, true)
 
 	hosts, err := siaCentralClient.GetActiveHosts(filter, 0, 500)
 	if err != nil {
@@ -110,11 +112,6 @@ func updateHostWhitelist() error {
 	}
 
 	for i, host := range hosts {
-		// age is not supported in the filter, so filter it manually
-		if host.FirstSeenTimestamp.After(minAge) {
-			continue
-		}
-
 		contractPrice.avg = contractPrice.avg.Add(host.Settings.ContractPrice)
 		storagePrice.avg = storagePrice.avg.Add(host.Settings.StoragePrice)
 		downloadPrice.avg = downloadPrice.avg.Add(host.Settings.DownloadBandwidthPrice)
